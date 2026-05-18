@@ -12,5 +12,4 @@ services:
         value: "5000"
       - key: MONGO_URI
         fromSecret: MONGO_URI
-      - key: ZAP_API_KEY
-        fromSecret: ZAP_API_KEY
+      # ZAP_API_KEY removed — mensagens agora são internas ao app

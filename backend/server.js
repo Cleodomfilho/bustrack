@@ -14,6 +14,22 @@ app.use(express.json());
 
 app.use('/api/responsaveis', require('./routes/responsavelRoutes'));
 app.use('/api/status', require('./routes/statusRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
+
+// Health check
+const mongoose = require('mongoose');
+app.get('/_health', (req, res) => {
+  const state = mongoose.connection.readyState; // 0 disconnected, 1 connected
+  res.json({ status: 'ok', dbState: state });
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
 
 const publicDir = path.join(__dirname, '..');
 // Serve static files from project root (css, js, assets, html)

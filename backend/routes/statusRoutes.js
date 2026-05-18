@@ -2,62 +2,8 @@ const express = require('express');
 const router = express.Router();
 const BusStatus = require('../models/BusStatus');
 const Responsavel = require('../models/Responsavel');
-
-const isZapConfigured = () => {
-  return Boolean(process.env.ZAP_API_KEY);
-};
-
-const normalizePhoneNumber = (phone) => {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 10 || digits.length === 11) {
-    return `55${digits}`;
-  }
-  if (digits.length === 12 && digits.startsWith('55')) {
-    return digits;
-  }
-  if (digits.length === 13 && digits.startsWith('055')) {
-    return digits.slice(1);
-  }
-  return digits;
-};
-
-const sendZapToAllResponsaveis = async (body) => {
-  if (!isZapConfigured()) {
-    return { success: false, sentTo: 0, error: 'Zap API não configurada' };
-  }
-
-  const responsaveis = await Responsavel.find();
-  const phones = responsaveis
-    .map((item) => normalizePhoneNumber(item.telefone))
-    .filter(Boolean);
-
-  const apiKey = process.env.ZAP_API_KEY;
-  let sentTo = 0;
-  const errors = [];
-
-  await Promise.allSettled(
-    phones.map((phone) => {
-      const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(body)}&apikey=${encodeURIComponent(apiKey)}`;
-      return fetch(url);
-    })
-  ).then(async (results) => {
-    for (const result of results) {
-      if (result.status === 'fulfilled') {
-        const response = result.value;
-        if (response.ok) {
-          sentTo += 1;
-        } else {
-          errors.push(`HTTP ${response.status}`);
-        }
-      } else {
-        errors.push(result.reason?.message || String(result.reason));
-      }
-    }
-  });
-
-  return { success: sentTo > 0, sentTo, errors };
-};
+const Message = require('../models/Message');
+const User = require('../models/User');
 
 // Retorna o status atual do ônibus
 router.get('/current', async (req, res) => {
@@ -84,7 +30,7 @@ router.get('/current', async (req, res) => {
 // Atualiza o status do ônibus
 router.post('/', async (req, res) => {
   try {
-    const { busId = 'onibus_07', status, label, message = '', sentTo = 12 } = req.body;
+    const { busId = 'onibus_07', status, label, message = '', sentTo = 12, senderId = null, senderRole = null } = req.body;
 
     if (!status || !label) {
       return res.status(400).json({ erro: 'Status e label são obrigatórios.' });
@@ -94,11 +40,33 @@ router.post('/', async (req, res) => {
     const salvo = await novoStatus.save();
 
     const smsBody = `${label} - Ônibus escolar. ${message || 'Sem mensagem adicional.'}`;
-    const smsResult = await sendZapToAllResponsaveis(smsBody);
+
+    // Determina nome do remetente, se fornecido
+    let senderName = 'Motorista';
+    if (senderId) {
+      try {
+        const s = await User.findById(senderId);
+        if (s) senderName = s.nome;
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    // Se motorista marcou em_rota, crie mensagem específica para responsáveis
+    if (status === 'em_rota' && senderRole === 'motorista') {
+      const text = `${senderName} está em rota. ${message || ''}`.trim();
+      const msg = new Message({ senderId: senderId || null, receiverRole: 'responsavel', text });
+      await msg.save();
+    } else {
+      // Comportamento padrão: broadcast para responsáveis e motoristas
+      const msgForResponsaveis = new Message({ senderId: senderId || null, receiverRole: 'responsavel', text: smsBody });
+      const msgForMotoristas = new Message({ senderId: senderId || null, receiverRole: 'motorista', text: smsBody });
+      await Promise.all([msgForResponsaveis.save(), msgForMotoristas.save()]);
+    }
 
     res.status(201).json({
       status: salvo,
-      sms: smsResult,
+      message: 'Status salvo e mensagens internas criadas.'
     });
   } catch (error) {
     res.status(500).json({ erro: error.message });
