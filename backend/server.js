@@ -16,6 +16,8 @@ app.use('/api/responsaveis', require('./routes/responsavelRoutes'));
 app.use('/api/status', require('./routes/statusRoutes'));
 
 const publicDir = path.join(__dirname, '..');
+// Serve static files from project root (css, js, assets, html)
+app.use(express.static(publicDir));
 app.use('/css', express.static(path.join(publicDir, 'css')));
 app.use('/js', express.static(path.join(publicDir, 'js')));
 app.use('/assets', express.static(path.join(publicDir, 'assets')));
