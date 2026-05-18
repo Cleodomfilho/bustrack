@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: bustrack-mongodb-atlas
+    env: node
+    plan: free
+    branch: main
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "5000"
+      - key: MONGO_URI
+        fromSecret: MONGO_URI
+      - key: ZAP_API_KEY
+        fromSecret: ZAP_API_KEY
