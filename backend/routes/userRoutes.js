@@ -6,20 +6,18 @@ const bcrypt = require('bcryptjs');
 // Cadastro simples sem senha
 router.post('/register', async (req, res) => {
   try {
-    const { nome, telefone, role, password } = req.body;
-    if (!nome || !role) return res.status(400).json({ erro: 'nome e role obrigatórios' });
+    const { nome, username, role, password } = req.body;
+    if (!nome || !role || !username || !password) return res.status(400).json({ erro: 'nome, username, role e password são obrigatórios' });
 
-    // Se for motorista, exige senha
-    let hashed = undefined;
-    if (role === 'motorista') {
-      if (!password) return res.status(400).json({ erro: 'motorista precisa de senha' });
-      const salt = await bcrypt.genSalt(10);
-      hashed = await bcrypt.hash(password, salt);
-    }
+    const existing = await User.findOne({ username });
+    if (existing) return res.status(409).json({ erro: 'username já existe' });
 
-    const usuario = new User({ nome, telefone, role, password: hashed });
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(password, salt);
+
+    const usuario = new User({ nome, username, role, password: hashed });
     await usuario.save();
-    res.status(201).json(usuario);
+    res.status(201).json({ id: usuario._id, nome: usuario.nome, username: usuario.username, role: usuario.role });
   } catch (error) {
     res.status(500).json({ erro: error.message });
   }
@@ -28,20 +26,16 @@ router.post('/register', async (req, res) => {
 // Login simples: usa telefone + senha (se existir)
 router.post('/login', async (req, res) => {
   try {
-    const { telefone, password } = req.body;
-    if (!telefone) return res.status(400).json({ erro: 'telefone é obrigatório' });
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ erro: 'username e password são obrigatórios' });
 
-    const user = await User.findOne({ telefone });
+    const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ erro: 'usuário não encontrado' });
 
-    if (user.password) {
-      // exige senha
-      if (!password) return res.status(400).json({ erro: 'senha necessária' });
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) return res.status(401).json({ erro: 'senha incorreta' });
-    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ erro: 'senha incorreta' });
 
-    res.json({ id: user._id, nome: user.nome, role: user.role });
+    res.json({ id: user._id, nome: user.nome, username: user.username, role: user.role });
   } catch (error) {
     res.status(500).json({ erro: error.message });
   }

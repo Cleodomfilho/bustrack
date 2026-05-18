@@ -12,7 +12,6 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/responsaveis', require('./routes/responsavelRoutes'));
 app.use('/api/status', require('./routes/statusRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));

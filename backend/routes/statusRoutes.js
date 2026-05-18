@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const BusStatus = require('../models/BusStatus');
-const Responsavel = require('../models/Responsavel');
 const Message = require('../models/Message');
 const User = require('../models/User');
 
