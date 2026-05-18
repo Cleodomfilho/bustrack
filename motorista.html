@@ -45,10 +45,10 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <div class="hidden md:flex items-center gap-2" style="font-size: 0.875rem; color: var(--muted-foreground);">
+                <div class="flex items-center gap-3">
+                <div class="hidden md:flex items-center gap-2" style="font-size: 0.875rem; color: var(--muted-foreground);" id="user-info">
                     <i class="fas fa-id-card"></i>
-                    <span>Motorista João</span>
+                    <span id="user-name">Motorista</span>
                 </div>
                 <a href="login.html" class="btn-ghost" style="color: var(--destructive);"><i class="fas fa-sign-out-alt"></i></a>
             </div>
@@ -86,8 +86,8 @@
                             <p style="font-size: 0.875rem; font-weight: 500;">Rota Central</p>
                         </div>
                         <div>
-                            <p style="font-size: 0.75rem; color: var(--muted-foreground);">Responsáveis</p>
-                            <p style="font-size: 0.875rem; font-weight: 500; color: var(--primary);">12 receberão SMS</p>
+                                    <p style="font-size: 0.75rem; color: var(--muted-foreground);">Responsáveis</p>
+                                        <p style="font-size: 0.875rem; font-weight: 500; color: var(--primary);">Mensagens internas serão enviadas</p>
                         </div>
                     </div>
                 </div>
@@ -137,7 +137,7 @@
                         <textarea id="status-message" rows="3" placeholder="Ex: Trânsito intenso na Av. Principal..."></textarea>
                     </div>
 
-                    <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="updateStatus()">Confirmar e Enviar SMS</button>
+                    <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="updateStatus()">Confirmar e Enviar</button>
                 </div>
             </div>
 
@@ -162,6 +162,10 @@
         const statusApiUrl = '/api/status';
         let selectedStatusValue = 'em_transito';
         let selectedStatusLabel = 'Em Trânsito';
+        const currentUser = JSON.parse(localStorage.getItem('busUser') || 'null');
+        if (currentUser) {
+            document.getElementById('user-name').textContent = currentUser.nome || currentUser.username;
+        }
 
         function selectStatus(element, value, label) {
             document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
@@ -176,7 +180,8 @@
                 status: selectedStatusValue,
                 label: selectedStatusLabel,
                 message,
-                sentTo: 12
+                senderId: currentUser ? currentUser.id : null,
+                senderRole: currentUser ? currentUser.role : 'motorista'
             };
 
             try {
@@ -197,7 +202,7 @@
                 display.className = `status-badge status-${selectedStatusValue}`;
                 display.innerHTML = `<i class="fas fa-${getIcon(selectedStatusValue)}" style="margin-right: 0.4rem;"></i> ${selectedStatusLabel}`;
 
-                alert('Status atualizado com sucesso! SMS enviado para os responsáveis.');
+                alert('Status atualizado com sucesso! Mensagens internas enviadas.');
                 document.getElementById('status-message').value = '';
                 console.log('Status salvo:', data);
             } catch (error) {

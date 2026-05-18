@@ -84,18 +84,9 @@
 
             <div>
                 <div class="card" style="margin-bottom: 1.5rem;">
-                    <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;"><i class="fas fa-bell text-primary" style="margin-right: 0.5rem;"></i> Alertas SMS</h2>
-                    <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 1.25rem;">Configure seu número para receber alertas automáticos.</p>
-                    
-                    <div class="input-group">
-                        <label class="label">Seu Telefone</label>
-                        <input type="text" placeholder="(00) 00000-0000" value="(11) 98765-4321">
-                    </div>
-                    <button class="btn btn-primary" style="width: 100%;">Salvar Configurações</button>
-                    
-                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 0.5rem; color: #4ade80; font-size: 0.75rem; text-align: center;">
-                        <i class="fas fa-check-circle"></i> Alertas ativos para este número
-                    </div>
+                    <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;"><i class="fas fa-envelope text-primary" style="margin-right: 0.5rem;"></i> Mensagens Internas</h2>
+                    <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 1.25rem;">As mensagens enviadas pelo motorista aparecerão aqui.</p>
+                    <div id="messages-list" style="display:flex; flex-direction:column; gap:0.75rem; max-height:320px; overflow:auto;"></div>
                 </div>
 
                 <div class="card">
@@ -233,9 +224,29 @@
             setInterval(loadCurrentStatus, 15000);
         }
 
+        async function loadMessages() {
+            const user = JSON.parse(localStorage.getItem('busUser') || 'null');
+            const receiverRole = user ? user.role : 'responsavel';
+            try {
+                const res = await fetch(`/api/messages?receiverRole=${encodeURIComponent(receiverRole)}`);
+                if (!res.ok) return;
+                const msgs = await res.json();
+                const el = document.getElementById('messages-list');
+                el.innerHTML = '';
+                msgs.forEach(m => {
+                    const d = document.createElement('div');
+                    d.style.padding = '0.5rem'; d.style.border = '1px solid var(--border)'; d.style.borderRadius = '6px';
+                    d.innerHTML = `<div style="font-weight:600">${m.text}</div><div style="font-size:0.75rem;color:var(--muted-foreground);">${new Date(m.createdAt).toLocaleString()}</div>`;
+                    el.appendChild(d);
+                });
+            } catch (e) { console.error(e); }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             requestNotificationPermission();
             startStatusPolling();
+            loadMessages();
+            setInterval(loadMessages, 15000);
         });
     </script>
 </body>
