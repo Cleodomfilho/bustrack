@@ -6,11 +6,10 @@ const AlertSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: ['em_transito', 'chegou_ao_local', 'pneu_furado', 'quebrado', 'em_rota', 'nao_disponivel', 'chegou_ao_destino']
+    enum: ['em_transito', 'em_rota', 'chegou_ao_local', 'pneu_furado', 'quebrado', 'nao_disponivel', 'chegou_ao_destino']
   },
   label: { type: String, required: true },
   message: { type: String, default: '' },
-  targets: [{ type: String, enum: ['aluno', 'responsavel'] }],
   createdAt: { type: Date, default: Date.now }
 });
 

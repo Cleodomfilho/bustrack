@@ -135,13 +135,14 @@
         }
 
         alerts.forEach(alert => {
+          const displayText = alert.personalizedMessage || alert.message || 'Sem mensagem adicional';
           const item = document.createElement('div');
           item.style.border = '1px solid var(--border)';
           item.style.borderRadius = '0.75rem';
           item.style.padding = '1rem';
           item.innerHTML = `
             <div style="font-weight: 600; margin-bottom: 0.5rem;">${alert.label}</div>
-            <div style="font-size: 0.9rem; color: var(--muted-foreground); margin-bottom: 0.5rem;">${alert.message || 'Sem mensagem adicional'}</div>
+            <div style="font-size: 0.9rem; color: var(--muted-foreground); margin-bottom: 0.5rem;">${displayText}</div>
             <div style="font-size: 0.75rem; color: var(--muted-foreground);">${formatDateTime(alert.createdAt)}</div>
           `;
           alertsContainer.appendChild(item);

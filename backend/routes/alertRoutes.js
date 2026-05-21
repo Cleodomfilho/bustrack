@@ -23,8 +23,7 @@ router.post('/', authMiddleware, roleMiddleware('motorista'), async (req, res) =
       sender: req.user.id,
       status,
       label,
-      message: message ? message.trim() : '',
-      targets: ['aluno', 'responsavel']
+      message: message ? message.trim() : ''
     });
     await alert.save();
 
@@ -55,7 +54,26 @@ router.get('/', authMiddleware, async (req, res) => {
       .limit(50)
       .populate('sender', 'nome email');
 
-    res.json(alerts);
+    const alertsWithPersonalizedMessage = alerts.map((alert) => {
+      const senderName = alert.sender?.nome || 'Motorista';
+      const baseText = alert.message ? `${alert.label}. ${alert.message}` : alert.label;
+      let personalizedMessage = baseText;
+
+      if (user.role === 'aluno') {
+        personalizedMessage = `Olá! ${senderName} informou: ${baseText}`;
+      } else if (user.role === 'responsavel') {
+        personalizedMessage = `Olá responsável! ${senderName} enviou um aviso para seu aluno: ${baseText}`;
+      } else {
+        personalizedMessage = `Você enviou: ${baseText}`;
+      }
+
+      return {
+        ...alert.toObject(),
+        personalizedMessage
+      };
+    });
+
+    res.json(alertsWithPersonalizedMessage);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
