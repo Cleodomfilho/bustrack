@@ -27,24 +27,17 @@ Edite o arquivo `.env` dentro de `backend/` com a URI do Atlas:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb+srv://cleodomfilho:<db_password>@cleodomgomes.6miuahw.mongodb.net/?appName=cleodomgomes
-ZAP_API_KEY=seu_callmebot_api_key
+MONGO_URI=mongodb+srv://<usuario>:<senha>@cluster.mongodb.net/?retryWrites=true&w=majority
+JWT_SECRET=troque_para_um_seguro_secret
 ```
 
-Substitua `<db_password>` pela senha do usuário `cleodomfilho` no MongoDB Atlas.
+Substitua `<usuario>` e `<senha>` pelos dados do seu usuário MongoDB Atlas.
 
 > Use o arquivo `backend/.env.example` como referência.
 
-## Usar WhatsApp via API gratuita
+## Observação
 
-Esta implementação usa a API gratuita do CallMeBot para enviar mensagens via WhatsApp.
-
-1. Acesse https://www.callmebot.com/whatsapp.php
-2. Siga as instruções para registrar seu número e obter a `API Key`
-3. Preencha `ZAP_API_KEY` em `backend/.env`
-4. Os responsáveis cadastrados em `Responsavel` receberão a mensagem via WhatsApp
-
-> O serviço é gratuito para testes e não substitui um provedor pago em produção.
+O projeto atual não usa mais a integração com a API do CallMeBot, portanto a variável `ZAP_API_KEY` foi removida do exemplo de configuração.
 
 ## Implantação na Web
 
@@ -58,10 +51,9 @@ Este projeto já está pronto para rodar como um app web combinado (frontend + b
 4. O Render detectará o `render.yaml` e usará estas configurações:
    - `buildCommand`: `cd backend && npm install`
    - `startCommand`: `cd backend && npm start`
-   - `envVars`: `MONGO_URI`, `ZAP_API_KEY`, `PORT`
+   - `envVars`: `MONGO_URI`, `PORT`
 5. Defina os segredos no Render:
    - `MONGO_URI`: sua string do MongoDB Atlas
-   - `ZAP_API_KEY`: sua chave CallMeBot
    - `PORT`: `5000` (opcional)
 6. Ative o deploy automático para cada push.
 
