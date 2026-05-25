@@ -58,7 +58,9 @@ async function authFetch(path, options = {}) {
     throw new Error('Sessão expirada. Faça login novamente');
   }
 
-  const data = await response.json();
+  const contentType = response.headers.get('content-type') || '';
+  const data = contentType.includes('application/json') ? await response.json() : {};
+
   if (!response.ok) {
     throw new Error(data.error || data.message || 'Erro na requisição');
   }

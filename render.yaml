@@ -1,15 +1,18 @@
 services:
   - type: web
-    name: bustrack-mongodb-atlas
+    name: bustrack
     env: node
     plan: free
-    branch: main
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    buildCommand: npm ci --omit=dev --prefix backend
+    startCommand: node backend/server.js
+    healthCheckPath: /_health
     autoDeploy: true
     envVars:
-      - key: PORT
-        value: "5000"
+      - key: NODE_ENV
+        value: production
       - key: MONGO_URI
-        fromSecret: MONGO_URI
-      # ZAP_API_KEY removed — mensagens agora são internas ao app
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGO_DB_NAME
+        value: bustrack
