@@ -58,7 +58,7 @@
 
         <div style="margin-bottom: 1.5rem;">
           <p style="font-size: 0.75rem; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status atual</p>
-          <span class="status-badge status-em-transito" id="current-status-badge">
+          <span class="status-badge status-em_transito" id="current-status-badge">
             <i class="fas fa-location-arrow" style="margin-right: 0.4rem;"></i>
             Aguardando atualização
           </span>
@@ -95,9 +95,7 @@
   <script>
     document.getElementById('logout-btn').addEventListener('click', logout);
 
-    if (!requireRole('aluno')) {
-      return;
-    }
+    if (requireRole('aluno')) {
 
     renderUserInfo('#user-info span');
     const noVehicle = document.getElementById('no-vehicle');
@@ -108,19 +106,20 @@
         const user = await authFetch('/auth/me');
         saveSession(getToken(), user);
         const vehicle = user.vehicle;
-        const alerts = await authFetch('/alerts');
         if (!vehicle) {
           noVehicle.style.display = 'block';
           dashboard.style.display = 'none';
           return;
         }
 
+        const alerts = await authFetch('/alerts');
+
         noVehicle.style.display = 'none';
         dashboard.style.display = 'block';
 
         const current = alerts[0] || null;
         const currentBadge = document.getElementById('current-status-badge');
-        const badgeClass = current ? `status-badge status-${current.status}` : 'status-badge status-em-transito';
+        const badgeClass = current ? `status-badge status-${current.status}` : 'status-badge status-em_transito';
         currentBadge.className = badgeClass;
         currentBadge.innerHTML = current ? `<i class="fas fa-${current.status === 'pneu_furado' ? 'life-ring' : current.status === 'chegou_ao_local' ? 'map-marker-alt' : current.status === 'quebrado' ? 'truck-monster' : current.status === 'em_transito' ? 'location-arrow' : current.status === 'em_rota' ? 'road' : 'check-circle'}" style="margin-right: 0.4rem;"></i> ${current.label}` : `Aguardando atualização`;
 
@@ -170,6 +169,7 @@
 
     refreshStatus();
     setInterval(refreshStatus, 5000);
+    }
   </script>
 </body>
 </html>

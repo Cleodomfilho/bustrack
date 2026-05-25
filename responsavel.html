@@ -115,7 +115,7 @@
   <script src="js/app.js"></script>
   <script>
     document.getElementById('logout-btn').addEventListener('click', logout);
-    if (!requireRole('responsavel')) return;
+    if (requireRole('responsavel')) {
 
     renderUserInfo('#user-info span');
     const noVehicle = document.getElementById('no-vehicle');
@@ -212,6 +212,7 @@
 
     showPanels();
     setInterval(showPanels, 5000);
+    }
   </script>
 </body>
 </html>
