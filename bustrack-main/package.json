@@ -1,0 +1,9 @@
+{
+  "name": "bustrack-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install": "cd backend && npm install",
+    "start": "cd backend && npm start"
+  }
+}

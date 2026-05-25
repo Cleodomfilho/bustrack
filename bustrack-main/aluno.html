@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel do Aluno - BusTrack Escolar</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="btn-ghost" style="padding: 0.5rem;"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex items-center gap-2">
+          <div style="background: rgba(56, 189, 248, 0.2); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-bus text-primary" style="font-size: 0.875rem;"></i>
+          </div>
+          <span style="font-weight: 700;">BusTrack <span class="text-primary">Escolar</span></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-2" style="font-size: 0.875rem; color: var(--muted-foreground);" id="user-info">
+          <i class="fas fa-user-circle"></i>
+          <span>Aluno</span>
+        </div>
+        <button class="btn btn-ghost" id="logout-btn" style="color: var(--destructive);"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 2rem 1rem;">
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 1.5rem; font-weight: 700;">Painel do Aluno</h1>
+      <p style="color: var(--muted-foreground);">Acompanhe o ônibus escolar e receba alertas enviados pelo motorista.</p>
+    </div>
+
+    <div id="no-vehicle" class="card" style="display:none; margin-bottom:1.5rem;">
+      <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Junte-se a um veículo</h2>
+      <p style="color: var(--muted-foreground); margin-bottom: 1rem;">Informe a placa do veículo que você deseja acompanhar.</p>
+      <div class="input-group">
+        <label class="label">Placa do veículo</label>
+        <input id="join-plate" type="text" placeholder="ABC1D23" />
+      </div>
+      <button class="btn btn-primary btn-lg" id="join-vehicle">Entrar no veículo</button>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="flex items-center justify-between" style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.125rem; font-weight: 600;"><i class="fas fa-bus text-primary" style="margin-right: 0.5rem;"></i> Ônibus Atual</h2>
+          <div class="flex items-center gap-1.5" style="font-size: 0.75rem; color: #4ade80;">
+            <span class="animate-pulse" style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%;"></span>
+            Ao vivo
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <p style="font-size: 0.75rem; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status atual</p>
+          <span class="status-badge status-em-transito" id="current-status-badge">
+            <i class="fas fa-location-arrow" style="margin-right: 0.4rem;"></i>
+            Aguardando atualização
+          </span>
+        </div>
+
+        <div class="md:grid md:grid-cols-2 gap-4" style="background: rgba(15, 23, 42, 0.6); border-radius: 0.75rem; padding: 1.25rem;">
+          <div>
+            <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-bottom: 0.25rem;">Rota</p>
+            <p id="vehicle-route" style="font-weight: 500;">—</p>
+          </div>
+          <div>
+            <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-bottom: 0.25rem;">Última atualização</p>
+            <p id="last-update" style="font-weight: 500;">—</p>
+          </div>
+          <div>
+            <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-bottom: 0.25rem;">Placa</p>
+            <p id="vehicle-plate" style="font-weight: 500;">—</p>
+          </div>
+          <div>
+            <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-bottom: 0.25rem;">Motorista</p>
+            <p id="vehicle-driver" style="font-weight: 500;">—</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.25rem;"><i class="fas fa-bell text-primary" style="margin-right: 0.5rem;"></i> Alertas do veículo</h2>
+        <div id="alert-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn').addEventListener('click', logout);
+
+    if (!requireRole('aluno')) {
+      return;
+    }
+
+    renderUserInfo('#user-info span');
+    const noVehicle = document.getElementById('no-vehicle');
+    const dashboard = document.getElementById('dashboard');
+
+    async function refreshStatus() {
+      try {
+        const user = await authFetch('/auth/me');
+        saveSession(getToken(), user);
+        const vehicle = user.vehicle;
+        const alerts = await authFetch('/alerts');
+        if (!vehicle) {
+          noVehicle.style.display = 'block';
+          dashboard.style.display = 'none';
+          return;
+        }
+
+        noVehicle.style.display = 'none';
+        dashboard.style.display = 'block';
+
+        const current = alerts[0] || null;
+        const currentBadge = document.getElementById('current-status-badge');
+        const badgeClass = current ? `status-badge status-${current.status}` : 'status-badge status-em-transito';
+        currentBadge.className = badgeClass;
+        currentBadge.innerHTML = current ? `<i class="fas fa-${current.status === 'pneu_furado' ? 'life-ring' : current.status === 'chegou_ao_local' ? 'map-marker-alt' : current.status === 'quebrado' ? 'truck-monster' : current.status === 'em_transito' ? 'location-arrow' : current.status === 'em_rota' ? 'road' : 'check-circle'}" style="margin-right: 0.4rem;"></i> ${current.label}` : `Aguardando atualização`;
+
+        document.getElementById('vehicle-route').textContent = vehicle.route || '—';
+        document.getElementById('vehicle-plate').textContent = vehicle.plate || '—';
+        document.getElementById('vehicle-driver').textContent = vehicle.driver?.nome || '—';
+        document.getElementById('last-update').textContent = current ? formatDateTime(current.createdAt) : '—';
+
+        const alertsContainer = document.getElementById('alert-list');
+        alertsContainer.innerHTML = '';
+        if (alerts.length === 0) {
+          alertsContainer.innerHTML = '<p style="color: var(--muted-foreground);">Ainda não há alertas para este veículo.</p>';
+          return;
+        }
+
+        alerts.forEach(alert => {
+          const displayText = alert.personalizedMessage || alert.message || 'Sem mensagem adicional';
+          const item = document.createElement('div');
+          item.style.border = '1px solid var(--border)';
+          item.style.borderRadius = '0.75rem';
+          item.style.padding = '1rem';
+          item.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">${alert.label}</div>
+            <div style="font-size: 0.9rem; color: var(--muted-foreground); margin-bottom: 0.5rem;">${displayText}</div>
+            <div style="font-size: 0.75rem; color: var(--muted-foreground);">${formatDateTime(alert.createdAt)}</div>
+          `;
+          alertsContainer.appendChild(item);
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    document.getElementById('join-vehicle').addEventListener('click', async () => {
+      const plate = document.getElementById('join-plate').value.trim();
+      if (!plate) return alert('Informe a placa do veículo.');
+      try {
+        await authFetch('/auth/me/join', { method: 'PATCH', body: { vehiclePlate: plate } });
+        alert('Veículo associado com sucesso. Atualizando painel...');
+        const me = await authFetch('/auth/me');
+        saveSession(getToken(), me);
+        refreshStatus();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    refreshStatus();
+    setInterval(refreshStatus, 5000);
+  </script>
+</body>
+</html>

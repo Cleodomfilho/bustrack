@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel do Motorista - BusTrack Escolar</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    .status-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .status-btn i {
+      font-size: 1.5rem;
+    }
+    .status-btn:hover {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .status-btn.active {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.12);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="btn-ghost" style="padding: 0.5rem;"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex items-center gap-2">
+          <div style="background: rgba(56, 189, 248, 0.2); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-bus text-primary" style="font-size: 0.875rem;"></i>
+          </div>
+          <span style="font-weight: 700;">BusTrack <span class="text-primary">Escolar</span></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-2" style="font-size: 0.875rem; color: var(--muted-foreground);" id="user-info">
+          <i class="fas fa-id-card"></i>
+          <span>Motorista</span>
+        </div>
+        <button class="btn btn-ghost" id="logout-btn" style="color: var(--destructive);"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 2rem 1rem;">
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 1.5rem; font-weight: 700;">Painel do Motorista</h1>
+      <p style="color: var(--muted-foreground);">Cadastre seu veículo e envie alertas para alunos e responsáveis.</p>
+    </div>
+
+    <div id="vehicle-form" class="card" style="margin-bottom: 1.5rem; display: none;">
+      <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Cadastrar veículo</h2>
+      <div class="input-group">
+        <label class="label">Nome do veículo</label>
+        <input id="vehicle-name" type="text" placeholder="Ônibus 07" />
+      </div>
+      <div class="input-group">
+        <label class="label">Placa</label>
+        <input id="vehicle-plate" type="text" placeholder="ABC1D23" />
+      </div>
+      <div class="input-group">
+        <label class="label">Rota</label>
+        <input id="vehicle-route" type="text" placeholder="Rota Central - Manhã" />
+      </div>
+      <button class="btn btn-primary btn-lg" id="create-vehicle">Cadastrar veículo</button>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+      <div class="md:grid md:grid-cols-3 gap-6">
+        <div class="md:col-span-2">
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="flex items-center justify-between" style="margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.125rem; font-weight: 600;"><i class="fas fa-bus text-primary" style="margin-right: 0.5rem;"></i> Veículo cadastrado</h2>
+              <div class="flex items-center gap-1.5" style="font-size: 0.75rem; color: #4ade80;">
+                <span class="animate-pulse" style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%;"></span>
+                Ao vivo
+              </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+              <p style="font-size: 0.75rem; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status atual</p>
+              <span class="status-badge status-em-transito" id="current-status-display">
+                <i class="fas fa-location-arrow" style="margin-right: 0.4rem;"></i>
+                Aguardando alerta
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4" style="background: rgba(15, 23, 42, 0.6); border-radius: 0.75rem; padding: 1rem;">
+              <div>
+                <p style="font-size: 0.75rem; color: var(--muted-foreground);">Veículo</p>
+                <p id="panel-vehicle-name" style="font-size: 0.875rem; font-weight: 500;">—</p>
+              </div>
+              <div>
+                <p style="font-size: 0.75rem; color: var(--muted-foreground);">Placa</p>
+                <p id="panel-vehicle-plate" style="font-size: 0.875rem; font-weight: 500; color: var(--primary);">—</p>
+              </div>
+              <div>
+                <p style="font-size: 0.75rem; color: var(--muted-foreground);">Rota</p>
+                <p id="panel-vehicle-route" style="font-size: 0.875rem; font-weight: 500;">—</p>
+              </div>
+              <div>
+                <p style="font-size: 0.75rem; color: var(--muted-foreground);">Motorista</p>
+                <p id="panel-driver-name" style="font-size: 0.875rem; font-weight: 500;">—</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem;">Atualizar status</h2>
+            <div class="md:grid md:grid-cols-3 gap-4" style="margin-bottom: 1.5rem;" id="status-buttons"></div>
+            <div class="input-group">
+              <label class="label">Mensagem adicional</label>
+              <textarea id="status-message" rows="3" placeholder="Ex: Ônibus chegando ao ponto..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-lg" style="width: 100%;" id="send-alert">Enviar alerta</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.25rem;"><i class="fas fa-history text-primary" style="margin-right: 0.5rem;"></i> Últimos alertas</h2>
+            <div id="alert-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('logout-btn').addEventListener('click', logout);
+    if (!requireRole('motorista')) return;
+
+    renderUserInfo('#user-info span');
+    const createForm = document.getElementById('vehicle-form');
+    const dashboard = document.getElementById('dashboard');
+    const statusButtons = document.getElementById('status-buttons');
+
+    const statuses = [
+      { value: 'em_transito', label: 'Veículo em Trânsito', icon: 'location-arrow' },
+      { value: 'em_rota', label: 'Veículo em Rota', icon: 'road' },
+      { value: 'chegou_ao_local', label: 'Chegou ao Local', icon: 'map-marker-alt' },
+      { value: 'pneu_furado', label: 'Pneu Furado', icon: 'life-ring' },
+      { value: 'quebrado', label: 'Veículo Quebrado', icon: 'truck-monster' },
+      { value: 'nao_disponivel', label: 'Não Disponível', icon: 'ban' },
+      { value: 'chegou_ao_destino', label: 'Chegou ao Destino', icon: 'check-circle' }
+    ];
+
+    let selectedStatus = statuses[0];
+    let currentVehicle = null;
+
+    function renderStatusButtons() {
+      statusButtons.innerHTML = '';
+      statuses.forEach((status) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'status-btn' + (status.value === selectedStatus.value ? ' active' : '');
+        btn.innerHTML = `
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <i class="fas fa-${status.icon} variant-emerald"></i>
+            <div>
+              <p style="font-weight:600; margin-bottom:0.25rem;">${status.label}</p>
+            </div>
+          </div>`;
+        btn.addEventListener('click', () => {
+          selectedStatus = status;
+          renderStatusButtons();
+        });
+        statusButtons.appendChild(btn);
+      });
+    }
+
+    async function initialize() {
+      try {
+        const user = await authFetch('/auth/me');
+        saveSession(getToken(), user);
+        currentVehicle = user.vehicle;
+
+        if (!currentVehicle) {
+          createForm.style.display = 'block';
+          dashboard.style.display = 'none';
+          return;
+        }
+
+        createForm.style.display = 'none';
+        dashboard.style.display = 'block';
+        document.getElementById('panel-vehicle-name').textContent = currentVehicle.name || '—';
+        document.getElementById('panel-vehicle-plate').textContent = currentVehicle.plate || '—';
+        document.getElementById('panel-vehicle-route').textContent = currentVehicle.route || '—';
+        document.getElementById('panel-driver-name').textContent = user.nome || '—';
+        await loadAlerts();
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+        logout();
+      }
+    }
+
+    async function loadAlerts() {
+      try {
+        const alerts = await authFetch('/alerts');
+        const alertList = document.getElementById('alert-list');
+        alertList.innerHTML = '';
+        if (alerts.length === 0) {
+          alertList.innerHTML = '<p style="color: var(--muted-foreground);">Nenhum alerta enviado ainda.</p>';
+          return;
+        }
+
+        alerts.forEach((alert) => {
+          const card = document.createElement('div');
+          card.style.border = '1px solid var(--border)';
+          card.style.borderRadius = '0.75rem';
+          card.style.padding = '1rem';
+          card.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 0.35rem;">${alert.label}</div>
+            <div style="font-size: 0.9rem; color: var(--muted-foreground); margin-bottom: 0.75rem;">${alert.message || 'Sem mensagem adicional'}</div>
+            <div style="font-size: 0.75rem; color: var(--muted-foreground);">${formatDateTime(alert.createdAt)}</div>
+          `;
+          alertList.appendChild(card);
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    document.getElementById('create-vehicle').addEventListener('click', async () => {
+      const name = document.getElementById('vehicle-name').value.trim();
+      const plate = document.getElementById('vehicle-plate').value.trim();
+      const route = document.getElementById('vehicle-route').value.trim();
+      if (!name || !plate || !route) {
+        return alert('Preencha nome, placa e rota do veículo.');
+      }
+
+      try {
+        await authFetch('/vehicles', { method: 'POST', body: { name, plate, route } });
+        alert('Veículo cadastrado com sucesso. Atualizando painel...');
+        initialize();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    document.getElementById('send-alert').addEventListener('click', async () => {
+      const message = document.getElementById('status-message').value.trim();
+      if (!currentVehicle) return alert('Cadastre um veículo antes de enviar alertas.');
+
+      try {
+        await authFetch('/alerts', {
+          method: 'POST',
+          body: {
+            vehicleId: currentVehicle._id,
+            status: selectedStatus.value,
+            label: selectedStatus.label,
+            message
+          }
+        });
+        alert('Alerta enviado com sucesso.');
+        document.getElementById('status-message').value = '';
+        loadAlerts();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    renderStatusButtons();
+    initialize();
+    setInterval(loadAlerts, 5000);
+  </script>
+</body>
+</html>
